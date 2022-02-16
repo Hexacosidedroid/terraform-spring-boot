@@ -9,25 +9,25 @@ import java.util.function.*;
 public class TerraformClient implements AutoCloseable {
     private static final String TERRAFORM_EXE_NAME = "terraform";
     private static final String VERSION_COMMAND = "version", INIT_COMMAND = "init", PLAN_COMMAND = "plan", APPLY_COMMAND = "apply", DESTROY_COMMAND = "destroy";
-    private static final String SUBS_ID_ENV_NAME = "ARM_SUBSCRIPTION_ID", CLIENT_ID_ENV_NAME = "ARM_CLIENT_ID", SECRET_ENV_NAME = "ARM_CLIENT_SECRET", TENANT_ID_ENV_NAME = "ARM_TENANT_ID";
-    private static final String USER_AGENT_ENV_NAME = "AZURE_HTTP_USER_AGENT", USER_AGENT_ENV_VALUE = "Java-TerraformClient", USER_AGENT_DELIMITER = ";";
+    private static final String ACCESS_KEY_ID_ENV_NAME = "AWS_ACCESS_KEY_ID", SECRET_ACCESS_KEY_ENV_NAME = "AWS_SECRET_ACCESS_KEY";
+    private static final String USER_AGENT_ENV_NAME = "AWS_HTTP_USER_AGENT", USER_AGENT_ENV_VALUE = "Java-TerraformClient", USER_AGENT_DELIMITER = ";";
     private static final Map<String, String> NON_INTERACTIVE_COMMAND_MAP = new HashMap<>();
     static {
         NON_INTERACTIVE_COMMAND_MAP.put(APPLY_COMMAND, "-auto-approve");
-        NON_INTERACTIVE_COMMAND_MAP.put(DESTROY_COMMAND, "-force");
+        NON_INTERACTIVE_COMMAND_MAP.put(DESTROY_COMMAND, "-auto-approve");
     }
 
     private final ExecutorService executor = Executors.newWorkStealingPool();
-    private final TerraformOptions options;
+    private final TerraformAwsOptions options;
     private File workingDirectory;
     private boolean inheritIO;
     private Consumer<String> outputListener, errorListener;
 
     public TerraformClient() {
-        this(new TerraformOptions());
+        this(new TerraformAwsOptions());
     }
 
-    public TerraformClient(TerraformOptions options) {
+    public TerraformClient(TerraformAwsOptions options) {
         assert options != null;
         this.options = options;
     }
@@ -126,10 +126,8 @@ public class TerraformClient implements AutoCloseable {
         launcher.setDirectory(this.getWorkingDirectory());
         launcher.setInheritIO(this.isInheritIO());
         launcher.setOrAppendEnvironmentVariable(USER_AGENT_ENV_NAME, USER_AGENT_ENV_VALUE, USER_AGENT_DELIMITER);
-        launcher.setEnvironmentVariable(SUBS_ID_ENV_NAME, this.options.getArmSubscriptionId());
-        launcher.setEnvironmentVariable(CLIENT_ID_ENV_NAME, this.options.getArmClientId());
-        launcher.setEnvironmentVariable(SECRET_ENV_NAME, this.options.getArmClientSecret());
-        launcher.setEnvironmentVariable(TENANT_ID_ENV_NAME, this.options.getArmTenantId());
+        launcher.setEnvironmentVariable(ACCESS_KEY_ID_ENV_NAME, this.options.getAccessKeyId());
+        launcher.setEnvironmentVariable(SECRET_ACCESS_KEY_ENV_NAME, this.options.getSecretAccessKey());
         launcher.appendCommands(NON_INTERACTIVE_COMMAND_MAP.get(command));
         launcher.setOutputListener(this.getOutputListener());
         launcher.setErrorListener(this.getErrorListener());
